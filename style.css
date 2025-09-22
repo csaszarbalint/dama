@@ -1,0 +1,22 @@
+body{
+    display: flex;
+    justify-content: center;
+    align-content: center;
+
+    margin: 0;
+    height: 100%;
+    padding: 20px;
+}
+
+.cell{
+    
+}
+
+main{
+    display: grid;
+    grid-template-columns: repeat(8, 50px);
+    grid-template-rows: repeat(8, 50px);
+    justify-content: center;
+    margin: auto;
+    padding-top: 50px;
+}
