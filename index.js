@@ -1,3 +1,3 @@
-document.body.onload(() => {
-    
-})
+document.body.onload = () => {
+
+}
