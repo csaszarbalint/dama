@@ -1,22 +1,33 @@
 body{
     display: flex;
     justify-content: center;
-    align-content: center;
+    align-items: center;
 
-    margin: 0;
-    height: 100%;
+    margin: auto;
+    height: 100vh;
     padding: 20px;
 }
 
 .cell{
-    
+
+}
+
+.black{
+    background-color: green;
+}
+
+.white{
+    background-color: lightgreen;
 }
 
 main{
     display: grid;
-    grid-template-columns: repeat(8, 50px);
+    /*grid-template-columns: repeat(8, 50px);
     grid-template-rows: repeat(8, 50px);
+    */
+    border: 1px solid black;
     justify-content: center;
-    margin: auto;
-    padding-top: 50px;
+    width: 600px;
+    height: 600px;
+    margin: 0px;
 }

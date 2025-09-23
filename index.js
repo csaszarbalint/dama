@@ -1,7 +1,8 @@
 class CheckersBoard{
-    constructor(heigth, width, parentNode){
-        this.heigth = heigth 
-        this.width = width 
+    constructor(parentNode){
+        this.HEIGHT = 8
+        this.WIDTH = 8
+        
         this.parentNode = parentNode
         this.initialize()
     }
@@ -11,14 +12,15 @@ class CheckersBoard{
      */
     initialize() {
         console.log(this.parentNode) 
-        this.parentNode.style = `grid-template-columns: repeat(${this.heigth}, 50px);`
-        this.parentNode.style = `grid-template-rows: repeat(${this.width}, 50px);`
+        this.parentNode.setAttribute('style',
+             'grid-template-columns: repeat(' + this.HEIGHT + ', 1fr);' +
+             'grid-template-rows: repeat(' + this.WIDTH + ', 1fr);') 
 
-        for(let i = 0; i < this.heigth; i++){
-            for(let j = 0; j < this.width; j++){
+        for(let i = 0; i < this.HEIGHT; i++){
+            for(let j = 0; j < this.WIDTH; j++){
                 const cell = document.createElement('div')
-                cell.className = 'cell'
-                cell.style.backgroundColor = (this.heigth + this.width) % 2 === 0 ? "black" : "white"
+                cell.classList.add('cell')
+                cell.classList.add((i+j) % 2 === 0 ? "black" : "white")
                 this.parentNode.appendChild(cell)
             }
         }
@@ -26,5 +28,5 @@ class CheckersBoard{
 }
 
 document.body.onload = () => {
-    new CheckersBoard(8, 8, document.querySelector('main'))
+    let a = new CheckersBoard(document.querySelector('main'))
 }
