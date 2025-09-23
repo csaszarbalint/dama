@@ -24,15 +24,19 @@ class Vec2{
 class Piece{
     constructor(position){
         this.pos = position
+        this.div;
     }
 }
 
 class CheckersBoard{
     constructor(parentNode){
-        //these should be one vec2 
         this.HEIGHT = 8
         this.WIDTH = 8
-        this.size = new Vec2(this.WIDTH-1, this.HEIGHT-1)
+        this.SIZE = new Vec2(this.WIDTH-1, this.HEIGHT-1)
+        this.BLACK_CELL_STYLE = "cell_black"
+        this.WHITE_CELL_STYLE = "cell_white"
+        this.BLACK_PIECE_STYLE = "piece_black"
+        this.WHITE_PIECE_STYLE = "piece_white"
         
         this.parentNode = parentNode
 
@@ -43,13 +47,11 @@ class CheckersBoard{
         this.initialize()
     }
 
-    #cellClicked(e){
-        console.log(e.target.pos)
+    #onPieceClicked(event){
+        const piece = event.target.parentNode
+
     }
 
-    /**
-     * 
-     */
     initialize() {
         //setting table dimension
         this.parentNode.setAttribute('style',
@@ -67,9 +69,7 @@ class CheckersBoard{
                 cell.pos = pos 
 
                 cell.classList.add('cell')
-                cell.classList.add((i+j) % 2 === 1 ? "black" : "white")
-
-                cell.addEventListener('click', this.#cellClicked)
+                cell.classList.add((i+j) % 2 === 1 ? this.BLACK_CELL_STYLE : this.WHITE_CELL_STYLE)
 
                 this.parentNode.appendChild(cell)
             }
@@ -85,19 +85,28 @@ class CheckersBoard{
         let currentPos = new Vec2(0,0);
         let offset = 0;
         while(true){
-            const whitePiece = new Piece(currentPos)
-            const blackPiece = new Piece(this.size.add(currentPos.multiply(-1)))
+            const blackPiece = new Piece(currentPos)
+            const whitePiece = new Piece(this.SIZE.add(currentPos.multiply(-1)))
+
+            blackPiece.div = document.createElement('div')
+            blackPiece.div.classList.add("piece", this.BLACK_PIECE_STYLE)
+            blackPiece.div.addEventListener('click', this.#onPieceClicked)
+            this.cells.get(blackPiece.pos.encode).appendChild(blackPiece.div)
+
+            whitePiece.div = document.createElement('div')
+            whitePiece.div.classList.add("piece", this.WHITE_PIECE_STYLE)
+            whitePiece.div.addEventListener('click', this.#onPieceClicked)
+            this.cells.get(whitePiece.pos.encode).appendChild(whitePiece.div)
 
             this.blackPieces.push(blackPiece)
             this.whitePieces.push(whitePiece)
 
             currentPos = currentPos.add(pattern[offset])
-            if(currentPos.x > this.size.x || currentPos.y > this.size.y) break; //exit condition
+            if(currentPos.x > this.SIZE.x || currentPos.y > this.SIZE.y) break; //exit condition
 
             if(offset >= pattern.length - 1) offset = -1
             offset++;
         }
-
     }
 }
 

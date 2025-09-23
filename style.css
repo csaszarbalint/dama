@@ -8,30 +8,48 @@ body{
     padding: 20px;
 }
 
-.cell{
-
-}
-
-.black{
-    background-color: rgb(116, 192, 116);
-}
-
-.white{
-    background-color: lightgoldenrodyellow;
-}
-
-.piece{
-    
-}
-
 main{
     display: grid;
     /*grid-template-columns: repeat(8, 50px);
     grid-template-rows: repeat(8, 50px);
     */
+    aspect-ratio: 1/1;
     border: 1px solid black;
     justify-content: center;
     width: 600px;
     height: 600px;
     margin: 0px;
+}
+
+.cell{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.cell_black{
+    background-color: rgb(116, 192, 116);
+}
+
+.cell_white{
+    background-color: lightgoldenrodyellow;
+}
+
+.piece{
+    aspect-ratio: 1/1;
+    border: 10px solid lightcoral; /*why does */
+    background-color: lightpink;
+    border-radius: 50%;
+    width: 50%;
+    height: 50%;
+}
+
+.piece_black{
+    border-color: lightcoral;
+    background-color: lightpink;
+}
+
+.piece_white{
+    border-color: lightslategray;
+    background-color: lightcyan;
 }
