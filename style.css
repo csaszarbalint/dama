@@ -13,11 +13,15 @@ body{
 }
 
 .black{
-    background-color: green;
+    background-color: rgb(116, 192, 116);
 }
 
 .white{
-    background-color: lightgreen;
+    background-color: lightgoldenrodyellow;
+}
+
+.piece{
+    
 }
 
 main{
