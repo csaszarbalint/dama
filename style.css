@@ -17,7 +17,9 @@ body ::-webkit-scrollbar{
 }
 
 main{
+    position: relative;
     display: grid;
+    grid-template: 1fr / 1fr;
     /*grid-template-columns: repeat(8, 50px);
     grid-template-rows: repeat(8, 50px);
     */
@@ -28,6 +30,16 @@ main{
     height: 600px;
     margin: 0px;
 }
+
+.layer{
+    grid-column: 1 / -1;
+    grid-row: 1 / -1;
+
+    width: 100%;
+    height: 100%;
+    display: grid;
+}
+
 
 .cell{
     display: flex;
@@ -44,13 +56,21 @@ main{
 }
 
 .piece{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    font-size: 170%;
+
     aspect-ratio: 1/1;
+    justify-self: center; /* horizontal alignment inside the cell */
+    align-self: center;   /* vertical alignment inside the cell */
     border: 10px solid lightcoral; /*why does */
     background-color: lightpink;
     border-radius: 50%;
     width: 50%;
     height: 50%;
-}
+}   
 
 .piece_black{
     border-color: lightcoral;
@@ -60,6 +80,13 @@ main{
 .piece_white{
     border-color: rgb(30, 84, 138);
     background-color: lightcyan;
+}
+
+.marker{
+    width: 30%;
+    height: 30%;
+    border-color: grey;
+    background-color: gray;
 }
 
 .navbar{
