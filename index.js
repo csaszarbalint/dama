@@ -141,6 +141,56 @@ class CheckersBoard{
     }
 }
 
+// Háttérszín váltás (egyszerű)
+function changeBackground() {
+  document.body.style.backgroundColor =
+    document.body.style.backgroundColor === "lightgreen" ? "#c1bfbeff" : "lightgreen";
+}
+
+// Tábla szín váltás — a te kódodban a "fekete" cellák osztálya: .cell_black
+function changeBoard() {
+  document.querySelectorAll(".cell_black").forEach(el => {
+    el.classList.toggle("cell_black_alt");
+  });
+   document.querySelectorAll(".cell_white").forEach(el => {
+    el.classList.toggle("cell_white_alt");
+  });
+}
+
+// Bábuk szín váltás — a te kódodban a bábuk osztályai: .piece_black és .piece_white
+function changePieces() {
+  document.querySelectorAll(".piece_black").forEach(el => {
+    el.classList.toggle("piece_black_alt");
+  });
+  document.querySelectorAll(".piece_white").forEach(el => {
+    el.classList.toggle("piece_white_alt");
+  });
+}
+
+// Minden visszaállítása alapértelmezettre
+function resetAll() {
+  // Háttér visszaállítása
+  document.body.style.backgroundColor = "#c1bfbeff";
+
+  // Táblaszínek visszaállítása
+  document.querySelectorAll(".cell_black_alt").forEach(el => {
+    el.classList.remove("cell_black_alt");
+  });
+
+  document.querySelectorAll(".cell_white_alt").forEach(el => {
+    el.classList.remove("cell_white_alt");
+  });
+
+  // Bábuk visszaállítása
+  document.querySelectorAll(".piece_black_alt").forEach(el => {
+    el.classList.remove("piece_black_alt");
+  });
+  document.querySelectorAll(".piece_white_alt").forEach(el => {
+    el.classList.remove("piece_white_alt");
+  });
+}
+
+
 document.body.onload = () => {
     let a = new CheckersBoard(document.querySelector('main'))
 }

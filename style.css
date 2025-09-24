@@ -6,6 +6,14 @@ body{
     margin: auto;
     height: 100vh;
     padding: 20px;
+
+    scrollbar-width: none;
+
+    -ms-overflow-style: none;
+}
+
+body ::-webkit-scrollbar{
+    display: none;
 }
 
 main{
@@ -50,6 +58,44 @@ main{
 }
 
 .piece_white{
-    border-color: lightslategray;
+    border-color: rgb(30, 84, 138);
     background-color: lightcyan;
+}
+
+.navbar{
+  display:flex;
+  justify-content:center;
+  background-color:#333;
+  padding:10px;
+  gap:10px;
+  position:  relative; top: -330px; left: -210px;
+}
+.navbar button{
+  padding:8px 12px;
+  border-radius:5px;
+  border: none;
+  cursor:pointer;
+  background:#555;
+  color:white;
+  font-weight:600;
+}
+.navbar button:hover{ background:#777; }
+
+/* Alternatív tábla szín (amiket a JS fog kapcsolgatni) */
+.cell_black_alt{
+  background-color: grey !important;
+}
+
+.cell_white_alt{
+    background-color: white !important;
+}
+
+/* Alternatív bábuk */
+.piece_black_alt{
+  background-color: white !important;
+  border-color: black !important;
+}
+.piece_white_alt{
+  background-color: red !important;
+  border-color: black !important;
 }
