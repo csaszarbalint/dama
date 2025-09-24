@@ -88,11 +88,13 @@ class CheckersBoard{
         
         this.parentNode = parentNode
 
+        //layers
         this.foreground = document.createElement('div')
         this.background = document.createElement('div')
 
         this.cells = new Map()
         this.pieceDivLookup = new Map()
+        this.markers = new Map() 
 
         this.pieces = []
         this.validMoves = []
@@ -118,7 +120,11 @@ class CheckersBoard{
         this.parentNode.appendChild(this.foreground)
 
         this.generateCells(this.background)
+        this.generateMarkers(this.foreground)
+        this.generatePieces(this.foreground)
+    }
 
+    generatePieces(node){
         let currentPos = new Vec2(0,0);
         let offset = 0;
         while(true){
@@ -139,19 +145,30 @@ class CheckersBoard{
             this.pieces.push(blackPiece)
             this.pieces.push(whitePiece)
 
-            this.foreground.appendChild(blackPiece)
-            this.foreground.appendChild(whitePiece)
+            node.appendChild(blackPiece)
+            node.appendChild(whitePiece)
 
             currentPos = currentPos.add(this.STARTING_PATTERN[offset++])
             if(currentPos.x > this.SIZE.x || currentPos.y > this.SIZE.y) break;  
 
             if(offset >= this.STARTING_PATTERN.length) offset = 0
         }
+
     }
 
-    removePiece(piece){
-        this.pieces = this.pieces.filter(e => e != piece)
-        this.foreground.removeChild(piece)
+    generateMarkers(node){
+        for(let i = 0; i <= this.SIZE.x; i++){
+            for(let j = 0; j <= this.SIZE.y; j++){
+                const marker = new Piece(new Vec2(i,j))
+
+                marker.classList.add('piece')
+                marker.classList.add('marker')
+                marker.addEventListener('click', (e) => {this.onMarkerClicked(e)})
+
+                this.markers.set(marker.pos.encode, marker)
+                this.foreground.appendChild(marker)
+            }
+        }
     }
 
     generateCells(node){
@@ -172,6 +189,11 @@ class CheckersBoard{
             }
         }
 
+    }
+
+    removePiece(piece){
+        this.pieces = this.pieces.filter(e => e != piece)
+        this.foreground.removeChild(piece)
     }
 
     /**
@@ -222,7 +244,7 @@ class CheckersBoard{
                 const posBehindOpponentPiece = posToCheck.add(vec)
                 const objBehindOpponentPiece = this.whatIsAtPosition(posBehindOpponentPiece)
 
-                if(objBehindOpponentPiece instanceof Piece || objBehindOpponentPiece == null) return
+                if(objBehindOpponentPiece instanceof Piece || objBehindOpponentPiece == null) continue
                 vp.push(new Move(posBehindOpponentPiece, () => {
                     this.removePiece(objAtPos);
                     piece.moveTo(posBehindOpponentPiece)
@@ -236,24 +258,13 @@ class CheckersBoard{
         return vp
     }
 
-    createTempPiece(vec){
-        const piece = new Piece(vec)
-
-        piece.classList.add('piece')
-        piece.classList.add('marker')
-        piece.addEventListener('click', (e) => {this.onMarkerClicked(e)})
-
-        return piece
-    }
-
+    //events
     onPieceClicked(e){
         const piece = e.target
-        this.generateCells(this.background) 
 
         this.validMoves = this.getValidPositions(piece) 
         for(let e of this.validMoves){
-            const marker = this.createTempPiece(e.pos)
-            this.foreground.appendChild(marker)
+            this.markers.get(e.pos.encode).classList.add('active_marker')
         }
     }
 
@@ -262,6 +273,9 @@ class CheckersBoard{
         for(const move of this.validMoves){
             if(move.pos.encode === e.target.pos.encode)
                 move.action()
+        }
+        for(const m of this.markers){
+            m[1].classList.remove('active_marker')
         }
     }
 }

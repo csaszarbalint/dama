@@ -87,6 +87,13 @@ main{
     height: 30%;
     border-color: grey;
     background-color: gray;
+    display: none;
+    pointer-events: none;
+}
+
+.active_marker{
+    display: inline;
+    pointer-events: all;
 }
 
 .navbar{
