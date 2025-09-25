@@ -72,6 +72,10 @@ main{
     height: 50%;
 }   
 
+.piece:focus{
+    display: none; 
+}
+
 .piece_black{
     border-color: lightcoral;
     background-color: lightpink;
@@ -83,18 +87,16 @@ main{
 }
 
 .marker{
-    width: 30%;
-    height: 30%;
     border-color: grey;
     background-color: gray;
-    display: none;
-    pointer-events: none;
+    display: inline;
+    opacity: 70%;
 }
 
-.active_marker{
+/* .active_marker{
     display: inline;
     pointer-events: all;
-}
+} */
 
 .navbar{
   display:flex;

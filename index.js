@@ -85,6 +85,12 @@ class CheckersBoard{
             new Vec2(1,-1), //1 down, 1 left 
             new Vec2(1,-1), //1 down, 1 left 
         ]
+        this.ACTION_PIECE_MOVED = () => {
+        
+        }
+        this.ACTION_PIECE_JUMPED = () => {
+
+        }
         
         this.parentNode = parentNode
 
@@ -120,7 +126,7 @@ class CheckersBoard{
         this.parentNode.appendChild(this.foreground)
 
         this.generateCells(this.background)
-        this.generateMarkers(this.foreground)
+        //this.generateMarkers(this.foreground)
         this.generatePieces(this.foreground)
     }
 
@@ -169,6 +175,16 @@ class CheckersBoard{
                 this.foreground.appendChild(marker)
             }
         }
+    }
+
+    createMarker(vec, node){
+        const marker = new Piece(vec)
+
+        marker.classList.add('marker')
+        marker.action = () => {}
+        node.appendChild(marker)
+
+        return marker
     }
 
     generateCells(node){
@@ -254,6 +270,7 @@ class CheckersBoard{
 
             //nothing there
             vp.push(new Move(posToCheck, () => {piece.moveTo(posToCheck)}))
+            
         }
         return vp
     }
@@ -261,10 +278,13 @@ class CheckersBoard{
     //events
     onPieceClicked(e){
         const piece = e.target
+        this.markers.clear()
 
-        this.validMoves = this.getValidPositions(piece) 
+        this.validMoves = this.getValidPositions(piece)
         for(let e of this.validMoves){
-            this.markers.get(e.pos.encode).classList.add('active_marker')
+            const marker = this.createMarker(e.pos, this.foreground)
+            marker.action = e.action
+            marker.click += (e) => {this.onMarkerClicked(e)} 
         }
     }
 
