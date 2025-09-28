@@ -56,10 +56,17 @@ class Piece extends HTMLElement{
     }
 }
 
-class Move{
-    constructor(position, action){
-        this.pos = position
-        this.action = action
+class Marker extends Piece{
+    constructor(position, node, onClickAction){
+        super(position)
+        node.appendChild(this)
+        this.classList.add('marker')
+
+        this.node = node
+        this.onclick = onClickAction
+    }
+    delete(){
+        this.node.removeChild(this)
     }
 }
 
@@ -85,32 +92,34 @@ class CheckersBoard{
             new Vec2(1,-1), //1 down, 1 left 
             new Vec2(1,-1), //1 down, 1 left 
         ]
-        this.ACTION_PIECE_MOVED = () => {
-        
-        }
-        this.ACTION_PIECE_JUMPED = () => {
 
+        this.ACTION_PIECE_MOVE = (piece, pos) => {
+            piece.moveTo(pos)
+            this.removeMarkers()
+            this.onMoveMade(this.ACTION_PIECE_MOVE)
+        }
+
+        this.ACTION_PIECE_TAKEN = (pieceToMove, pos, takenPiece) => {
+            this.removePiece(takenPiece);
+            pieceToMove.moveTo(pos)
+            this.removeMarkers()
+            this.onMoveMade(this.ACTION_PIECE_TAKEN)
         }
         
         this.parentNode = parentNode
-
-        //layers
-        this.foreground = document.createElement('div')
-        this.background = document.createElement('div')
-
         this.cells = new Map()
-        this.pieceDivLookup = new Map()
-        this.markers = new Map() 
-
         this.pieces = []
-        this.validMoves = []
-
-        this.initialize()
-
+        this.currentTurn = new Turn() 
+        this.onMoveMadeCallback = () => {}
     }
 
-    initialize() {
+    initialize(players) {
         customElements.define("piece-div", Piece)
+        customElements.define("marker-div", Marker)
+
+        //layers
+        this.background = document.createElement('div')
+        this.foreground = document.createElement('div')
 
         this.foreground.classList.add('layer')
         this.foreground.setAttribute('style',
@@ -126,11 +135,10 @@ class CheckersBoard{
         this.parentNode.appendChild(this.foreground)
 
         this.generateCells(this.background)
-        //this.generateMarkers(this.foreground)
-        this.generatePieces(this.foreground)
+        this.generatePieces(this.foreground, players)
     }
 
-    generatePieces(node){
+    generatePieces(node, players){
         let currentPos = new Vec2(0,0);
         let offset = 0;
         while(true){
@@ -145,8 +153,8 @@ class CheckersBoard{
             blackPiece.moveVectors = this.BLACK_MOVE_VECTORS
             whitePiece.moveVectors = this.WHITE_MOVE_VECTORS
 
-            blackPiece.owner = "black" //TODO: remove these magic values
-            whitePiece.owner = "white"
+            blackPiece.owner = players[0]
+            whitePiece.owner = players[1] 
             
             this.pieces.push(blackPiece)
             this.pieces.push(whitePiece)
@@ -160,31 +168,6 @@ class CheckersBoard{
             if(offset >= this.STARTING_PATTERN.length) offset = 0
         }
 
-    }
-
-    generateMarkers(node){
-        for(let i = 0; i <= this.SIZE.x; i++){
-            for(let j = 0; j <= this.SIZE.y; j++){
-                const marker = new Piece(new Vec2(i,j))
-
-                marker.classList.add('piece')
-                marker.classList.add('marker')
-                marker.addEventListener('click', (e) => {this.onMarkerClicked(e)})
-
-                this.markers.set(marker.pos.encode, marker)
-                this.foreground.appendChild(marker)
-            }
-        }
-    }
-
-    createMarker(vec, node){
-        const marker = new Piece(vec)
-
-        marker.classList.add('marker')
-        marker.action = () => {}
-        node.appendChild(marker)
-
-        return marker
     }
 
     generateCells(node){
@@ -210,6 +193,13 @@ class CheckersBoard{
     removePiece(piece){
         this.pieces = this.pieces.filter(e => e != piece)
         this.foreground.removeChild(piece)
+        this.currentTurn.pieceTaken = true
+    }
+    removeMarkers(){
+        const markers = this.foreground.querySelectorAll('marker-div')
+        for(const m of markers){
+            this.foreground.removeChild(m)
+        }
     }
 
     /**
@@ -242,7 +232,7 @@ class CheckersBoard{
         return this.cells.get(vec.encode)
     }
 
-    getValidPositions(piece){
+    setMarkers(piece){
         let vp = []
         for(const vec of piece.moveVectors){
             const posToCheck = piece.pos.add(vec)
@@ -261,16 +251,12 @@ class CheckersBoard{
                 const objBehindOpponentPiece = this.whatIsAtPosition(posBehindOpponentPiece)
 
                 if(objBehindOpponentPiece instanceof Piece || objBehindOpponentPiece == null) continue
-                vp.push(new Move(posBehindOpponentPiece, () => {
-                    this.removePiece(objAtPos);
-                    piece.moveTo(posBehindOpponentPiece)
-                }))
+                vp.push(new Marker(posBehindOpponentPiece, this.foreground, () => {this.ACTION_PIECE_TAKEN(piece, posBehindOpponentPiece, objAtPos)}))
                 continue 
             }
 
             //nothing there
-            vp.push(new Move(posToCheck, () => {piece.moveTo(posToCheck)}))
-            
+            vp.push(new Marker(posToCheck, this.foreground, () => {this.ACTION_PIECE_MOVE(piece, posToCheck)}))
         }
         return vp
     }
@@ -278,25 +264,76 @@ class CheckersBoard{
     //events
     onPieceClicked(e){
         const piece = e.target
-        this.markers.clear()
+        if(piece.owner != this.currentTurn.activePlayer) return
 
-        this.validMoves = this.getValidPositions(piece)
-        for(let e of this.validMoves){
-            const marker = this.createMarker(e.pos, this.foreground)
-            marker.action = e.action
-            marker.click += (e) => {this.onMarkerClicked(e)} 
-        }
+        this.removeMarkers()
+
+        this.setMarkers(piece)
+    }
+    
+    onMoveMade(action){
+        this.onMoveMadeCallback(action)
+    }
+}
+
+class Player{
+    constructor(name){
+        this.name = name
+    }
+}
+
+class Turn{
+    constructor(activePlayer, inactivePlayer){
+        this.activePlayer = activePlayer
+        this.inactivePlayer = inactivePlayer
+
+        this.pieceTaken = false
+        this.action = () => {}
+    }
+}
+class Game{
+    constructor(checkersBoard, player1, player2){
+        this.checkersBoard = checkersBoard
+        this.checkersBoard.onMoveMadeCallback = (action) => {this.onMoveMadeCallback(action)}
+
+        this.turns = []
+        this.turns.push(new Turn(player1, player2))
     }
 
-    onMarkerClicked(e){
-        if(this.validMoves == []) return
-        for(const move of this.validMoves){
-            if(move.pos.encode === e.target.pos.encode)
-                move.action()
+    start(){
+        this.checkersBoard.initialize([this.turns[this.turns.length-1].activePlayer, this.turns[this.turns.length-1].inactivePlayer])
+        this.checkersBoard.currentTurn = this.turns[this.turns.length-1]
+    }
+
+    checkForWin(){
+        //does the inactive player have any pieces left
+        return this.checkersBoard.pieces.some(p => p.owner == this.turns[this.turns.length-1].inactivePlayer) == 0 
+    }
+    
+    onWin(){
+        alert(this.turns[this.turns.length-1].activePlayer.name + " won")
+
+        const node = this.checkersBoard.parentNode
+        node.innerHTML = ''
+        this.checkersBoard = new CheckersBoard(node)
+
+        //location.reload() //the laziest shit ever
+    }
+
+    onMoveMadeCallback(action){
+        const prevTurn = this.turns[this.turns.length-1]
+
+        prevTurn.action = action
+
+        if(this.checkForWin()) return this.onWin()
+
+        if(prevTurn.pieceTaken){
+            this.turns.push(new Turn(prevTurn.activePlayer, prevTurn.inactivePlayer))
+        }else{
+            this.turns.push(new Turn(prevTurn.inactivePlayer, prevTurn.activePlayer))
         }
-        for(const m of this.markers){
-            m[1].classList.remove('active_marker')
-        }
+
+        this.checkersBoard.currentTurn = this.turns[this.turns.length-1]
     }
 }
 
@@ -351,5 +388,11 @@ function resetAll() {
 
 
 document.body.onload = () => {
-    new CheckersBoard(document.querySelector('main'))
+    
+    const game = new Game(
+        new CheckersBoard(document.querySelector('main')),
+        new Player('Big'),
+        new Player('Balls'))
+
+    game.start()
 }
