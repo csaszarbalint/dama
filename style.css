@@ -1,8 +1,10 @@
 body{
-    display: flex;
-    justify-content: center;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: 1fr 1fr 1fr;
+    justify-items: center;
     align-items: center;
-
+ 
     margin: auto;
     height: 100vh;
     padding: 20px;
@@ -23,11 +25,11 @@ main{
     /*grid-template-columns: repeat(8, 50px);
     grid-template-rows: repeat(8, 50px);
     */
+    grid-column-start: 2;
+    grid-row-start: 3;
     aspect-ratio: 1/1;
     border: 1px solid black;
     justify-content: center;
-    width: 600px;
-    height: 600px;
     margin: 0px;
 }
 
@@ -134,4 +136,39 @@ main{
 .piece_white_alt{
   background-color: red !important;
   border-color: black !important;
+}
+
+ul {
+  grid-column: 1 / span 3;
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background-color: #333333;
+  position: sticky;
+  top: 0;
+}
+
+ul li {
+  float: left;
+}
+
+ul li a {
+  display: block;
+  color: white;
+  text-align: center;
+  padding: 14px 16px;
+  text-decoration: none;
+}
+
+ul li a:hover {
+  background-color: #111111;
+}
+
+.p1{
+
+}
+
+.p2{
+
 }
