@@ -46,42 +46,64 @@ class Piece extends HTMLElement{
     }
 
     moveBy(vec){
-        this.pos = this.pos.add(vec)
+        this.pos = this.relativePosition.add(vec)
     }
 
     moveTo(vec){
         this.pos = vec 
     }
 
-    #getBoardSpacePosition(){
-        const anchorDiff = this.relativePosition.add(this.anchorPoint.multiply(-1))
+    #converToBoardSpace(vec){
+        const anchorDiff = vec.subtract(this.anchorPoint)
 
         const rotatedAnchorDiff = anchorDiff.rotate(this.rotationMatrix)
         
         return rotatedAnchorDiff.add(this.anchorPoint)
     }
 
+    #convertToGridSpace(vec){
+        //mirroring to the x axis
+        const anchorDiff = vec.subtract(this.anchorPoint)
+        anchorDiff.y *= -1
+        return anchorDiff.add(this.anchorPoint)
+    }
+
     set pos(vec){
         this.relativePosition = vec
 
-        const boardSpacePosition = this.#getBoardSpacePosition()
+        const boardSpacePosition = this.#converToBoardSpace(this.relativePosition)
 
-        this.style.gridRow = boardSpacePosition.y
-        this.style.gridColumn = boardSpacePosition.x
+        const gridSpacePosition = this.#convertToGridSpace(boardSpacePosition)
+
+        this.style.gridRow = gridSpacePosition.y
+        this.style.gridColumn = gridSpacePosition.x
     }
 
     get pos(){
-        return this.#getBoardSpacePosition()
+        return this.#converToBoardSpace(this.relativePosition)
     }
 
     set moveVectors(arr){
-        this.mVectors = arr.map(vec => vec.rotate(this.rotationMatrix))
+        this.mVectors = arr
     }
+
+    get moveVectors(){
+        //return this.mVectors.map(vec => vec.rotate(this.rotationMatrix)) //not the best
+        return this.mVectors
+    }
+
+    posAfterMove(vec){
+        return this.#converToBoardSpace(this.relativePosition.add(vec)) 
+    }
+
+    // get positionsToMoveTo(){
+    //     return this.mVectors.map(vec => this.#converToBoardSpace(this.relativePosition.add(vec)))
+    // }
 }
 
 class Marker extends Piece{
-    constructor(position, node, onClickAction){
-        super(position)
+    constructor(relativePosition, anchorPoint, rotationMatrix, node, onClickAction){
+        super(relativePosition, anchorPoint, rotationMatrix)
         node.appendChild(this)
         this.classList.add('marker')
 
@@ -102,6 +124,7 @@ class CheckersBoard{
         this.WHITE_CELL_STYLE = "cell_white"
         this.BLACK_PIECE_STYLE = "piece_black"
         this.WHITE_PIECE_STYLE = "piece_white"
+
         this.PIECE_MOVE_VECTORS = [
             new Vec2(-1,1),
             new Vec2(1,1)
@@ -112,15 +135,25 @@ class CheckersBoard{
             new Vec2(1,-1), //1 down, 1 left 
         ]
 
-        this.ACTION_PIECE_MOVE = (piece, pos) => {
-            piece.moveTo(pos)
+        this.MIDDLE_POINT = new Vec2(4.5, 4.5) //hardcoded cause js don't have a built in median function or smth TODO: fix later
+
+        this.TRANSFORM_NO_ROTATION = [
+            new Vec2(1,0),
+            new Vec2(0,1),
+        ]
+        this.TRANSFORM_180_ROTATION = [
+            new Vec2(Math.cos(Math.PI), -Math.sin(Math.PI)),
+            new Vec2(Math.sin(Math.PI), Math.cos(Math.PI))
+        ]
+
+        this.ACTION_PIECE_MOVE = (piece, vec) => {
+            piece.moveBy(vec)
             this.removeMarkers()
             this.onMoveMade(this.ACTION_PIECE_MOVE)
         }
-
-        this.ACTION_PIECE_TAKEN = (pieceToMove, pos, takenPiece) => {
+        this.ACTION_PIECE_TAKEN = (pieceToMove, vec, takenPiece) => {
             this.removePiece(takenPiece);
-            pieceToMove.moveTo(pos)
+            pieceToMove.moveBy(vec)
             this.removeMarkers()
             this.onMoveMade(this.ACTION_PIECE_TAKEN)
         }
@@ -159,21 +192,11 @@ class CheckersBoard{
 
     generatePieces(node, players){
         let currentPos = new Vec2(1,1);
-        const angle90 = Math.PI *-1
-        const roationMatrix = [
-            new Vec2(Math.cos(angle90), -Math.sin(angle90)),
-            new Vec2(Math.sin(angle90), Math.cos(angle90))
-        ]
-        const noRotate = [
-            new Vec2(1,0),
-            new Vec2(0,1),
-        ]
-
-        const middle = new Vec2(4.5,4.5)
         let offset = 0;
+
         while(true){
-            const blackPiece = new Piece(currentPos, middle, noRotate)
-            const whitePiece = new Piece(currentPos, middle, roationMatrix)
+            const blackPiece = new Piece(currentPos, this.MIDDLE_POINT, this.TRANSFORM_NO_ROTATION)
+            const whitePiece = new Piece(currentPos, this.MIDDLE_POINT, this.TRANSFORM_180_ROTATION)
 
             blackPiece.classList.add("piece", this.BLACK_PIECE_STYLE)
             blackPiece.addEventListener('click', (e) => this.onPieceClicked(e))
@@ -264,8 +287,8 @@ class CheckersBoard{
 
     setMarkers(piece){
         let vp = []
-        for(const vec of piece.moveVectors){
-            const posToCheck = piece.pos.add(vec)
+        for(const mVec of piece.moveVectors){
+            const posToCheck = piece.posAfterMove(mVec)
 
             const objAtPos = this.whatIsAtPosition(posToCheck)
 
@@ -277,16 +300,28 @@ class CheckersBoard{
                 if(objAtPos.owner === piece.owner) continue  
 
                 //opponents piece
-                const posBehindOpponentPiece = posToCheck.add(vec)
+                const posBehindOpponentPiece = piece.posAfterMove(mVec.multiply(2))
                 const objBehindOpponentPiece = this.whatIsAtPosition(posBehindOpponentPiece)
 
                 if(objBehindOpponentPiece instanceof Piece || objBehindOpponentPiece == null) continue
-                vp.push(new Marker(posBehindOpponentPiece, this.foreground, () => {this.ACTION_PIECE_TAKEN(piece, posBehindOpponentPiece, objAtPos)}))
+                vp.push(new Marker(
+                    posBehindOpponentPiece,
+                    this.MIDDLE_POINT,
+                    this.TRANSFORM_NO_ROTATION,
+                    this.foreground,
+                    () => {this.ACTION_PIECE_TAKEN(piece, mVec.multiply(2), objAtPos)}
+                ))
                 continue 
             }
 
             //nothing there
-            vp.push(new Marker(posToCheck, this.foreground, () => {this.ACTION_PIECE_MOVE(piece, posToCheck)}))
+            vp.push(new Marker(
+                posToCheck,
+                this.MIDDLE_POINT,
+                this.TRANSFORM_NO_ROTATION,
+                this.foreground, 
+                () => {this.ACTION_PIECE_MOVE(piece, mVec)}
+            ))
         }
         return vp
     }

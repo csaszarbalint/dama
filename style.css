@@ -1,7 +1,7 @@
 body{
     display: grid;
     grid-template-columns: 1fr 1fr 1fr; 
-    grid-template-rows: 3em 1fr 1fr;
+    grid-template-rows: 3em 1fr 10fr;
     /* justify-items: stretch;
     align-items: center; */
     margin: 0;
