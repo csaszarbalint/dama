@@ -34,15 +34,18 @@ class Vec2{
 }
 
 class Piece extends HTMLElement{
-    constructor(relativePosition, anchorPoint, rotationMatrix){
+    constructor(relativePosition, anchorPoint, rotationMatrix, moveVectors, owner){
         super()
 
         this.anchorPoint = anchorPoint
         this.rotationMatrix = rotationMatrix
         
         this.pos = relativePosition 
-        this.mVectors = []
-        this.owner; //group id
+        this.moveVectors = moveVectors
+        this.owner = owner; //group id
+
+        this.classList.add('piece')
+        if(owner) this.classList.add(owner.pieceStyle)
     }
 
     moveBy(vec){
@@ -116,10 +119,8 @@ class Marker extends Piece{
 }
 
 class CheckersBoard{
-    constructor(parentNode){
-        this.HEIGHT = 8
-        this.WIDTH = 8
-        this.SIZE = new Vec2(this.WIDTH-1, this.HEIGHT-1)
+    constructor(parentNode, size){
+        this.SIZE = new Vec2(size.x, size.y)
         this.BLACK_CELL_STYLE = "cell_black"
         this.WHITE_CELL_STYLE = "cell_white"
         this.BLACK_PIECE_STYLE = "piece_black"
@@ -128,6 +129,12 @@ class CheckersBoard{
         this.PIECE_MOVE_VECTORS = [
             new Vec2(-1,1),
             new Vec2(1,1)
+        ]
+        this.KING_MOVE_VECTORS = [
+            new Vec2(-1,1),
+            new Vec2(1,1),
+            new Vec2(-1,-1),
+            new Vec2(1,-1)
         ]
         this.STARTING_PATTERN = [
             new Vec2(0,2), //2 up
@@ -148,12 +155,22 @@ class CheckersBoard{
 
         this.ACTION_PIECE_MOVE = (piece, vec) => {
             piece.moveBy(vec)
+            if(piece.relativePosition.y >= this.SIZE.y) 
+            {
+                piece.moveVectors = this.KING_MOVE_VECTORS
+                piece.innerText = 'K'
+            }
             this.removeMarkers()
             this.onMoveMade(this.ACTION_PIECE_MOVE)
         }
         this.ACTION_PIECE_TAKEN = (pieceToMove, vec, takenPiece) => {
             this.removePiece(takenPiece);
             pieceToMove.moveBy(vec)
+            if(pieceToMove.relativePosition.y >= this.SIZE.y)
+            {
+                pieceToMove.moveVectors = this.KING_MOVE_VECTORS
+                pieceToMove.innerText = 'K'
+            }
             this.removeMarkers()
             this.onMoveMade(this.ACTION_PIECE_TAKEN)
         }
@@ -175,13 +192,13 @@ class CheckersBoard{
 
         this.foreground.classList.add('layer')
         this.foreground.setAttribute('style',
-             'grid-template-columns: repeat(' + this.HEIGHT + ', 1fr);' +
-             'grid-template-rows: repeat(' + this.WIDTH + ', 1fr);');
+             'grid-template-columns: repeat(' + this.SIZE.y + ', 1fr);' +
+             'grid-template-rows: repeat(' + this.SIZE.x + ', 1fr);');
 
         this.background.classList.add('layer')
         this.background.setAttribute('style',
-             'grid-template-columns: repeat(' + this.HEIGHT + ', 1fr);' +
-             'grid-template-rows: repeat(' + this.WIDTH + ', 1fr);');
+             'grid-template-columns: repeat(' + this.SIZE.y + ', 1fr);' +
+             'grid-template-rows: repeat(' + this.SIZE.x + ', 1fr);');
 
         this.parentNode.appendChild(this.background)
         this.parentNode.appendChild(this.foreground)
@@ -195,19 +212,11 @@ class CheckersBoard{
         let offset = 0;
 
         while(true){
-            const blackPiece = new Piece(currentPos, this.MIDDLE_POINT, this.TRANSFORM_NO_ROTATION)
-            const whitePiece = new Piece(currentPos, this.MIDDLE_POINT, this.TRANSFORM_180_ROTATION)
+            const blackPiece = new Piece(currentPos, this.MIDDLE_POINT, this.TRANSFORM_NO_ROTATION, this.PIECE_MOVE_VECTORS, players[0])
+            const whitePiece = new Piece(currentPos, this.MIDDLE_POINT, this.TRANSFORM_180_ROTATION, this.PIECE_MOVE_VECTORS, players[1])
 
-            blackPiece.classList.add("piece", this.BLACK_PIECE_STYLE)
             blackPiece.addEventListener('click', (e) => this.onPieceClicked(e))
-            whitePiece.classList.add("piece", this.WHITE_PIECE_STYLE)
             whitePiece.addEventListener('click', (e) => this.onPieceClicked(e))
-
-            blackPiece.moveVectors = this.PIECE_MOVE_VECTORS
-            whitePiece.moveVectors = this.PIECE_MOVE_VECTORS
-
-            blackPiece.owner = players[0]
-            whitePiece.owner = players[1] 
             
             this.pieces.push(blackPiece)
             this.pieces.push(whitePiece)
@@ -216,7 +225,7 @@ class CheckersBoard{
             node.appendChild(whitePiece)
 
             currentPos = currentPos.add(this.STARTING_PATTERN[offset++])
-            if(currentPos.x > this.SIZE.x + 1 || currentPos.y > this.SIZE.y + 1) break;  
+            if(currentPos.x > this.SIZE.x || currentPos.y > this.SIZE.y) break;  
 
             if(offset >= this.STARTING_PATTERN.length) offset = 0
         }
@@ -226,8 +235,8 @@ class CheckersBoard{
     generateCells(node){
         node.innerHTML = ''
         this.cells = new Map()
-        for(let i = 0; i < this.HEIGHT; i++){
-            for(let j = 0; j < this.WIDTH; j++){
+        for(let i = 0; i < this.SIZE.y; i++){
+            for(let j = 0; j < this.SIZE.x; j++){
                 const cell = document.createElement('div')
                 const pos = new Vec2(j, this.HEIGHT - i - 1)
 
@@ -264,15 +273,13 @@ class CheckersBoard{
      * Cell - if there is no peace under the position
      */
     whatIsAtPosition(vec){
-        const dV = this.SIZE.subtract(vec)
-
-        if(dV.x > this.SIZE.x || dV.x < 0 ){
+        if(vec.x > this.SIZE.x || vec.x < 1 ){
             console.warn("Invalid x position")
             console.dir(vec)
             return null
         }
         
-        if(dV.y > this.SIZE.y || dV.y < 0 ){
+        if(vec.y > this.SIZE.y || vec.y < 1 ){
             console.warn("Invalid y position")
             console.dir(vec)
             return null
@@ -282,7 +289,7 @@ class CheckersBoard{
             if(piece.pos.encode == vec.encode) return piece
         }
 
-        return this.cells.get(vec.encode)
+        return true
     }
 
     setMarkers(piece){
@@ -342,8 +349,9 @@ class CheckersBoard{
 }
 
 class Player{
-    constructor(name){
+    constructor(name, pieceStyle){
         this.name = name
+        this.pieceStyle = pieceStyle
     }
 }
 
@@ -451,27 +459,10 @@ function change(action)
 
 
 document.body.onload = () => {
-
-    const angle = Math.PI / 2
-
-    const rotation_matrix = [
-        new Vec2(Math.cos(angle), -Math.sin(angle)),
-        new Vec2(Math.sin(angle), Math.cos(angle))
-    ]
-    const vec1 = new Vec2(2,1);
-
-    const newVec = new Vec2(
-            Math.round(vec1.x * rotation_matrix[0].x + vec1.y * rotation_matrix[0].y,1)
-        ,
-            Math.round(vec1.x * rotation_matrix[1].x + vec1.y * rotation_matrix[1].y,1)
-    )
-
-    console.log(newVec)
-    
     const game = new Game(
-        new CheckersBoard(document.querySelector('main')),
-        new Player('Big'),
-        new Player('Balls'))
+        new CheckersBoard(document.querySelector('main'), new Vec2(8,8)),
+        new Player('Big', 'piece_black'),
+        new Player('Balls', 'piece_white'))
 
     game.start()
 }
