@@ -26,12 +26,13 @@ class Vec2{
 }
 
 class Piece extends HTMLElement{
-    constructor(position){
+    constructor(relativePosition, anchorPoint, rotationMatrix){
         super()
 
-        this.onPositionSet = () => {};
+        this.anchorPoint = anchorPoint
+        this.rotationMatrix = rotationMatrix
         
-        this.pos = position
+        this.pos = relativePosition 
         this.moveVectors = []
         this.owner; //group id
     }
@@ -45,10 +46,20 @@ class Piece extends HTMLElement{
     }
 
     set pos(vec){
-        this.position = vec
-        this.style.gridRow = 8 - this.position.y //TODO: remove magic number 
-        this.style.gridColumn = this.position.x + 1
-        this.onPositionSet(this.position)
+        this.relativePosition = vec
+
+        const anchorDiff = this.relativePosition.add(this.anchorPoint.multiply(-1))
+
+        const rotatedAnchorDiff = new Vec2(
+            anchorDiff.x * this.rotationMatrix[0].x + anchorDiff.y * this.rotationMatrix[0].y
+        ,
+            anchorDiff.x * this.rotationMatrix[1].x + anchorDiff.y * this.rotationMatrix[1].y
+        )
+
+        const boardSpacePosition = rotatedAnchorDiff.add(this.anchorPoint)
+
+        this.style.gridRow = boardSpacePosition.y
+        this.style.gridColumn = boardSpacePosition.x
     }
 
     get pos(){
@@ -139,11 +150,22 @@ class CheckersBoard{
     }
 
     generatePieces(node, players){
-        let currentPos = new Vec2(0,0);
+        let currentPos = new Vec2(1,1);
+        const angle = 0
+        const roationMatrix = [
+            new Vec2(Math.cos(angle), -Math.sin(angle)),
+            new Vec2(Math.sin(angle), Math.cos(angle))
+        ]
+        const noRotate = [
+            new Vec2(1,0),
+            new Vec2(0,1),
+        ]
+
+        const middle = new Vec2(4.5,4.5)
         let offset = 0;
         while(true){
-            const blackPiece = new Piece(currentPos)
-            const whitePiece = new Piece(this.SIZE.add(currentPos.multiply(-1)))
+            const blackPiece = new Piece(currentPos, middle, noRotate)
+            const whitePiece = new Piece(currentPos, middle, roationMatrix)
 
             blackPiece.classList.add("piece", this.BLACK_PIECE_STYLE)
             blackPiece.addEventListener('click', (e) => this.onPieceClicked(e))
@@ -386,6 +408,22 @@ function change(action)
 
 
 document.body.onload = () => {
+
+    const angle = Math.PI / 2
+
+    const rotation_matrix = [
+        new Vec2(Math.cos(angle), -Math.sin(angle)),
+        new Vec2(Math.sin(angle), Math.cos(angle))
+    ]
+    const vec1 = new Vec2(2,1);
+
+    const newVec = new Vec2(
+            Math.round(vec1.x * rotation_matrix[0].x + vec1.y * rotation_matrix[0].y,1)
+        ,
+            Math.round(vec1.x * rotation_matrix[1].x + vec1.y * rotation_matrix[1].y,1)
+    )
+
+    console.log(newVec)
     
     const game = new Game(
         new CheckersBoard(document.querySelector('main')),
