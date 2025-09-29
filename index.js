@@ -45,18 +45,22 @@ class Piece extends HTMLElement{
         this.pos = vec 
     }
 
-    set pos(vec){
-        this.relativePosition = vec
-
+    #getBoardSpacePosition(){
         const anchorDiff = this.relativePosition.add(this.anchorPoint.multiply(-1))
 
         const rotatedAnchorDiff = new Vec2(
-            anchorDiff.x * this.rotationMatrix[0].x + anchorDiff.y * this.rotationMatrix[0].y
+            Math.round((anchorDiff.x * this.rotationMatrix[0].x + anchorDiff.y * this.rotationMatrix[0].y) * 10) / 10
         ,
-            anchorDiff.x * this.rotationMatrix[1].x + anchorDiff.y * this.rotationMatrix[1].y
+            Math.round((anchorDiff.x * this.rotationMatrix[1].x + anchorDiff.y * this.rotationMatrix[1].y) * 10) / 10
         )
+        
+        return rotatedAnchorDiff.add(this.anchorPoint)
+    }
 
-        const boardSpacePosition = rotatedAnchorDiff.add(this.anchorPoint)
+    set pos(vec){
+        this.relativePosition = vec
+
+        const boardSpacePosition = this.#getBoardSpacePosition()
 
         this.style.gridRow = boardSpacePosition.y
         this.style.gridColumn = boardSpacePosition.x
@@ -151,10 +155,10 @@ class CheckersBoard{
 
     generatePieces(node, players){
         let currentPos = new Vec2(1,1);
-        const angle = 0
+        const angle90 = Math.PI *-1
         const roationMatrix = [
-            new Vec2(Math.cos(angle), -Math.sin(angle)),
-            new Vec2(Math.sin(angle), Math.cos(angle))
+            new Vec2(Math.cos(angle90), -Math.sin(angle90)),
+            new Vec2(Math.sin(angle90), Math.cos(angle90))
         ]
         const noRotate = [
             new Vec2(1,0),
@@ -185,7 +189,7 @@ class CheckersBoard{
             node.appendChild(whitePiece)
 
             currentPos = currentPos.add(this.STARTING_PATTERN[offset++])
-            if(currentPos.x > this.SIZE.x || currentPos.y > this.SIZE.y) break;  
+            if(currentPos.x > this.SIZE.x + 1 || currentPos.y > this.SIZE.y + 1) break;  
 
             if(offset >= this.STARTING_PATTERN.length) offset = 0
         }
