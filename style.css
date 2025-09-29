@@ -1,25 +1,20 @@
 body{
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    grid-template-rows: 1fr 1fr 1fr;
-    justify-items: center;
-    align-items: center;
- 
-    margin: auto;
+    grid-template-columns: 1fr 1fr 1fr; 
+    grid-template-rows: 3em 1fr 1fr;
+    /* justify-items: stretch;
+    align-items: center; */
+    margin: 0;
     height: 100vh;
     padding: 20px;
-
-    scrollbar-width: none;
-
-    -ms-overflow-style: none;
+    box-sizing: border-box;
+    background-color: darkolivegreen;
 }
 
-body ::-webkit-scrollbar{
-    display: none;
-}
 
 main{
-    position: relative;
+
+  position: relative;
     display: grid;
     grid-template: 1fr / 1fr;
     /*grid-template-columns: repeat(8, 50px);
@@ -29,7 +24,7 @@ main{
     grid-row-start: 3;
     aspect-ratio: 1/1;
     border: 1px solid black;
-    justify-content: center;
+    /* justify-content: center; */
     margin: 0px;
 }
 
@@ -100,24 +95,7 @@ main{
     pointer-events: all;
 } */
 
-.navbar{
-  display:flex;
-  justify-content:center;
-  background-color:#333;
-  padding:10px;
-  gap:10px;
-  position:  relative; top: -330px; left: -210px;
-}
-.navbar button{
-  padding:8px 12px;
-  border-radius:5px;
-  border: none;
-  cursor:pointer;
-  background:#555;
-  color:white;
-  font-weight:600;
-}
-.navbar button:hover{ background:#777; }
+
 
 /* Alternatív tábla szín (amiket a JS fog kapcsolgatni) */
 .cell_black_alt{
@@ -151,9 +129,6 @@ ul {
 
 ul li {
   float: left;
-}
-
-ul li a {
   display: block;
   color: white;
   text-align: center;
@@ -161,14 +136,28 @@ ul li a {
   text-decoration: none;
 }
 
-ul li a:hover {
+ul li button {
+  background-color: #111111;
+  color: white;
+}
+
+ul li:hover {
+  
   background-color: #111111;
 }
 
 .p1{
-
+  text-align: left;
+  grid-column-start: 1;
+  grid-row-start: 2;
+  padding-top: 15%;
+  margin: auto;
 }
 
 .p2{
-
+ text-align: right;
+  grid-column-start: 3;
+  grid-row-start: 2;
+  padding-top: 15%;
+  margin: auto;
 }
