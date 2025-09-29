@@ -16,6 +16,14 @@ class Vec2{
         return new Vec2(this.x * n, this.y * n)
     }
 
+    rotate(matrix){
+        return new Vec2(
+            Math.round((this.x * matrix[0].x + this.y * matrix[0].y) * 10) / 10
+        ,
+            Math.round((this.x * matrix[1].x + this.y * matrix[1].y) * 10) / 10
+        )
+    }
+
     get encode(){
         return this.x * 10 + this.y
     }
@@ -33,7 +41,7 @@ class Piece extends HTMLElement{
         this.rotationMatrix = rotationMatrix
         
         this.pos = relativePosition 
-        this.moveVectors = []
+        this.mVectors = []
         this.owner; //group id
     }
 
@@ -48,11 +56,7 @@ class Piece extends HTMLElement{
     #getBoardSpacePosition(){
         const anchorDiff = this.relativePosition.add(this.anchorPoint.multiply(-1))
 
-        const rotatedAnchorDiff = new Vec2(
-            Math.round((anchorDiff.x * this.rotationMatrix[0].x + anchorDiff.y * this.rotationMatrix[0].y) * 10) / 10
-        ,
-            Math.round((anchorDiff.x * this.rotationMatrix[1].x + anchorDiff.y * this.rotationMatrix[1].y) * 10) / 10
-        )
+        const rotatedAnchorDiff = anchorDiff.rotate(this.rotationMatrix)
         
         return rotatedAnchorDiff.add(this.anchorPoint)
     }
@@ -67,7 +71,11 @@ class Piece extends HTMLElement{
     }
 
     get pos(){
-        return this.position
+        return this.#getBoardSpacePosition()
+    }
+
+    set moveVectors(arr){
+        this.mVectors = arr.map(vec => vec.rotate(this.rotationMatrix))
     }
 }
 
@@ -94,13 +102,9 @@ class CheckersBoard{
         this.WHITE_CELL_STYLE = "cell_white"
         this.BLACK_PIECE_STYLE = "piece_black"
         this.WHITE_PIECE_STYLE = "piece_white"
-        this.BLACK_MOVE_VECTORS = [
+        this.PIECE_MOVE_VECTORS = [
             new Vec2(-1,1),
             new Vec2(1,1)
-        ]
-        this.WHITE_MOVE_VECTORS = [
-            new Vec2(-1,-1),
-            new Vec2(1,-1)
         ]
         this.STARTING_PATTERN = [
             new Vec2(0,2), //2 up
@@ -176,8 +180,8 @@ class CheckersBoard{
             whitePiece.classList.add("piece", this.WHITE_PIECE_STYLE)
             whitePiece.addEventListener('click', (e) => this.onPieceClicked(e))
 
-            blackPiece.moveVectors = this.BLACK_MOVE_VECTORS
-            whitePiece.moveVectors = this.WHITE_MOVE_VECTORS
+            blackPiece.moveVectors = this.PIECE_MOVE_VECTORS
+            whitePiece.moveVectors = this.PIECE_MOVE_VECTORS
 
             blackPiece.owner = players[0]
             whitePiece.owner = players[1] 
