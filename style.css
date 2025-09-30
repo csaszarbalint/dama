@@ -1,7 +1,7 @@
 body{
     display: grid;
     grid-template-columns: 1fr 1fr 1fr; 
-    grid-template-rows: 3em 1fr 10fr;
+    grid-template-rows: 3em 5em 10fr 5em ;
     /* justify-items: stretch;
     align-items: center; */
     margin: 0;
@@ -148,16 +148,16 @@ ul li:hover {
 
 .p1{
   text-align: left;
-  grid-column-start: 1;
+  grid-column-start: 2;
   grid-row-start: 2;
-  padding-top: 15%;
+  padding-top: 0;
   margin: auto;
 }
 
 .p2{
- text-align: right;
-  grid-column-start: 3;
-  grid-row-start: 2;
-  padding-top: 15%;
+  text-align: right;
+  grid-column-start: 2;
+  grid-row-start: 4;
+  padding-bottom: 0;
   margin: auto;
 }
