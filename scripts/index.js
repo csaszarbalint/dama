@@ -98,23 +98,33 @@ class Piece extends HTMLElement{
     posAfterMove(vec){
         return this.#converToBoardSpace(this.relativePosition.add(vec)) 
     }
-
-    // get positionsToMoveTo(){
-    //     return this.mVectors.map(vec => this.#converToBoardSpace(this.relativePosition.add(vec)))
-    // }
 }
 
 class Marker extends Piece{
-    constructor(relativePosition, anchorPoint, rotationMatrix, node, onClickAction){
+    constructor(pieceToMove, relativePosition, anchorPoint, rotationMatrix, node, move, onclickHandler, onClickAction){
         super(relativePosition, anchorPoint, rotationMatrix)
+
+        this.pieceToMove = pieceToMove
+
         node.appendChild(this)
         this.classList.add('marker')
 
         this.node = node
-        this.onclick = onClickAction
+        this.move = move
+        this.onClickAction = onClickAction
+        this.onclick = onclickHandler
     }
     delete(){
         this.node.removeChild(this)
+    }
+}
+
+class Move{
+    constructor(piece, moveVec, type, action){
+        this.piece = piece
+        this.moveVec = moveVec
+        this.type = type
+        this.action = action
     }
 }
 
@@ -153,6 +163,9 @@ class CheckersBoard{
             new Vec2(Math.sin(Math.PI), Math.cos(Math.PI))
         ]
 
+        this.JUMP_MOVE = "jump"
+        this.NORMAL_MOVE = "normal"
+        this.NO_MOVE = 'no'
         this.ACTION_PIECE_MOVE = (piece, vec) => {
             piece.moveBy(vec)
             if(piece.relativePosition.y >= this.SIZE.y) 
@@ -161,7 +174,7 @@ class CheckersBoard{
                 piece.innerText = 'K'
             }
             this.removeMarkers()
-            this.onMoveMade(this.ACTION_PIECE_MOVE)
+            this.onTurnOver(this.ACTION_PIECE_MOVE)
         }
         this.ACTION_PIECE_TAKEN = (pieceToMove, vec, takenPiece) => {
             this.removePiece(takenPiece);
@@ -172,14 +185,36 @@ class CheckersBoard{
                 pieceToMove.innerText = 'K'
             }
             this.removeMarkers()
-            this.onMoveMade(this.ACTION_PIECE_TAKEN)
+            this.onTurnOver(this.ACTION_PIECE_TAKEN)
         }
         
         this.parentNode = parentNode
         this.cells = new Map()
         this.pieces = []
-        this.currentTurn = new Turn() 
+        this.turn = new Turn() 
         this.onMoveMadeCallback = () => {}
+    }
+
+    set currentTurn(turn){
+        const moves = this.getAllPossibleMoves(turn)
+        this.turn = turn
+
+        if(moves.length == 0){
+            turn.gameOver = true
+            this.onTurnOver()
+            return
+        }
+
+        const jumpMoves = moves.filter(m => m.type == this.JUMP_MOVE) 
+        if(jumpMoves.length > 0){
+            this.turn.validMoves = jumpMoves
+        }else{
+            this.turn.validMoves = moves
+        }
+    }
+
+    get currentTurn(){
+        return this.turn
     }
 
     initialize(players) {
@@ -292,15 +327,27 @@ class CheckersBoard{
         return true
     }
 
-    setMarkers(piece){
-        let vp = []
+    getAllPossibleMoves(turn){
+        const piecesOfInterest = this.pieces.filter(p => p.owner == turn.activePlayer)
+
+        const arr = []
+        for(const piece of piecesOfInterest){
+            for(const a of this.getPossibleMoveForPiece(piece)){
+                arr.push(a)
+            }
+        }
+        return arr 
+    }
+
+    getPossibleMoveForPiece(piece){
+        const vMoves = []
         for(const mVec of piece.moveVectors){
             const posToCheck = piece.posAfterMove(mVec)
 
             const objAtPos = this.whatIsAtPosition(posToCheck)
 
             //outside
-            if(!objAtPos) continue
+            if(!objAtPos) continue 
 
             if(objAtPos instanceof Piece){
                 //players own piece
@@ -311,26 +358,25 @@ class CheckersBoard{
                 const objBehindOpponentPiece = this.whatIsAtPosition(posBehindOpponentPiece)
 
                 if(objBehindOpponentPiece instanceof Piece || objBehindOpponentPiece == null) continue
-                vp.push(new Marker(
-                    posBehindOpponentPiece,
-                    this.MIDDLE_POINT,
-                    this.TRANSFORM_NO_ROTATION,
-                    this.foreground,
-                    () => {this.ACTION_PIECE_TAKEN(piece, mVec.multiply(2), objAtPos)}
+                vMoves.push(new Move(
+                    piece,
+                    mVec.multiply(2),
+                    this.JUMP_MOVE,
+                    () => {this.removePiece(objAtPos)}
                 ))
+
                 continue 
             }
 
             //nothing there
-            vp.push(new Marker(
-                posToCheck,
-                this.MIDDLE_POINT,
-                this.TRANSFORM_NO_ROTATION,
-                this.foreground, 
-                () => {this.ACTION_PIECE_MOVE(piece, mVec)}
+            vMoves.push(new Move(
+                piece,
+                mVec,
+                this.NORMAL_MOVE,
+                () => {}
             ))
         }
-        return vp
+        return vMoves
     }
 
     //events
@@ -340,11 +386,38 @@ class CheckersBoard{
 
         this.removeMarkers()
 
-        this.setMarkers(piece)
+        const moves = this.currentTurn.validMoves.filter(m => m.piece == piece)
+
+        for(const move of moves){
+            new Marker(
+                move.piece,
+                piece.relativePosition.add(move.moveVec),
+                piece.anchorPoint,
+                piece.rotationMatrix,
+                this.foreground,
+                move,
+                (e) => this.onMarkerClick(e),
+                () => move.action()
+            )
+        }
+
+        //this.setMarkers(piece)
+    }
+
+    onMarkerClick(e){
+        const marker = e.target
+
+        marker.pieceToMove.moveBy(marker.move.moveVec)
+
+        marker.onClickAction()
+
+        this.removeMarkers()
+
+        this.onTurnOver()
     }
     
-    onMoveMade(action){
-        this.onMoveMadeCallback(action)
+    onTurnOver(){
+        this.onMoveMadeCallback()
     }
 }
 
@@ -362,6 +435,9 @@ class Turn{
 
         this.pieceTaken = false
         this.action = () => {}
+
+        this.validMoves = []
+        this.gameOver = false
     }
 }
 class Game{
@@ -388,15 +464,13 @@ class Game{
 
         const node = this.checkersBoard.parentNode
         node.innerHTML = ''
-        this.checkersBoard = new CheckersBoard(node)
+        this.checkersBoard = new CheckersBoard(node, new Vec2(8,8))
 
         //location.reload() //the laziest shit ever
     }
 
-    onMoveMadeCallback(action){
+    onMoveMadeCallback(){
         const prevTurn = this.turns[this.turns.length-1]
-
-        prevTurn.action = action
 
         if(this.checkForWin()) return this.onWin()
 
