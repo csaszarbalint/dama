@@ -146,8 +146,12 @@ class CheckersBoard{
             new Vec2(-1,-1),
             new Vec2(1,-1)
         ]
+
+        this.PATTERN_START_POS = new Vec2(1,1)
         this.STARTING_PATTERN = [
-            new Vec2(2,0)
+            new Vec2(0,2), //2 up
+            new Vec2(1,-1), //1 down, 1 left 
+            new Vec2(1,-1), //1 down, 1 left
         ]
 
         this.MIDDLE_POINT = new Vec2(
@@ -193,26 +197,12 @@ class CheckersBoard{
         this.parentNode = parentNode
         this.cells = new Map()
         this.pieces = []
-        this.turn = new Turn() 
+        this.turn = null 
         this.onMoveMadeCallback = () => {}
     }
 
     set currentTurn(turn){
-        const moves = this.getAllPossibleMoves(turn)
         this.turn = turn
-
-        if(moves.length == 0){
-            turn.gameOver = true
-            this.onTurnOver()
-            return
-        }
-
-        const jumpMoves = moves.filter(m => m.type == this.JUMP_MOVE) 
-        if(jumpMoves.length > 0){
-            this.turn.validMoves = jumpMoves
-        }else{
-            this.turn.validMoves = moves
-        }
     }
 
     get currentTurn(){
@@ -244,8 +234,29 @@ class CheckersBoard{
         this.generatePieces(this.foreground, players)
     }
 
+    startTurn(turn){
+        const moves = this.getAllPossibleMoves(turn)
+        this.turn = turn
+
+        //check for any available move
+        if(moves.length == 0){
+            turn.gameOver = true
+            this.onTurnOver()
+            return
+        }
+
+        //check for jumpMoves
+        const jumpMoves = moves.filter(m => m.type == this.JUMP_MOVE) 
+        if(jumpMoves.length > 0){
+            this.turn.validMoves = jumpMoves
+            return
+        }
+            
+        this.turn.validMoves = moves
+    }
+
     generatePieces(node, players){
-        let currentPos = new Vec2(1,1);
+        let currentPos = this.PATTERN_START_POS;
         let offset = 0;
 
         while(true){
@@ -424,7 +435,10 @@ class Player{
         this.pieceStyle = pieceStyle
         this.infoDiv = infoDiv
 
-        this.infoDiv.innerText = this.name
+        this.infoDiv.querySelector('.nameIndicator').innerHTML = this.name
+        this.activityIndicator = this.infoDiv.querySelector('.activityIndicator')
+
+
     }
 }
 
@@ -438,6 +452,9 @@ class Turn{
 
         this.validMoves = []
         this.gameOver = false
+
+        this.inactivePlayer.activityIndicator.style.opacity = '0%'
+        this.activePlayer.activityIndicator.style.opacity = '100%'
     }
 }
 class Game{
@@ -451,7 +468,7 @@ class Game{
 
     start(){
         this.checkersBoard.initialize([this.turns[this.turns.length-1].activePlayer, this.turns[this.turns.length-1].inactivePlayer])
-        this.checkersBoard.currentTurn = this.turns[this.turns.length-1]
+        this.checkersBoard.startTurn(this.turns[this.turns.length-1])
     }
 
     checkForWin(){
@@ -477,7 +494,7 @@ class Game{
             this.turns.push(new Turn(prevTurn.inactivePlayer, prevTurn.activePlayer))
         }
 
-        this.checkersBoard.currentTurn = this.turns[this.turns.length-1]
+        this.checkersBoard.startTurn(this.turns[this.turns.length-1])
     }
 }
 
@@ -532,8 +549,8 @@ function change(action)
 document.body.onload = () => {
     const game = new Game(
         new CheckersBoard(document.querySelector('main'), new Vec2(8,8)),
-        new Player('Big', 'piece_black', document.getElementsByClassName('p1')[0]),
-        new Player('Balls', 'piece_white', document.getElementsByClassName('p2')[0]))
+        new Player('Big', 'piece_black', document.querySelector("body div.playerInfo[name='player1']")),
+        new Player('Balls', 'piece_white', document.querySelector("body div.playerInfo[name='player2']")))
 
     game.start()
 }

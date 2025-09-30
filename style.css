@@ -1,27 +1,32 @@
 body{
     display: grid;
     grid-template-columns: 1fr 1fr 1fr; 
-    grid-template-rows: 3em 5em 10fr 5em ;
-    /* justify-items: stretch;
-    align-items: center; */
+    grid-template-rows: 1fr 3fr 8fr 3fr 1fr;
+    grid-template-areas: 
+        "header header header"
+        ". playerInfo ."
+        ". main ."
+        ". asdf ."
+        ". footer .";
+
     margin: 0;
     height: 100vh;
-    padding: 20px;
     box-sizing: border-box;
     background-color: darkolivegreen;
 }
 
 
 main{
-
-  position: relative;
     display: grid;
+    grid-area: main;
+    align-self: center;
+    justify-self: center;
     grid-template: 1fr / 1fr;
+    grid-area: main;
+    height: 100%;
     /*grid-template-columns: repeat(8, 50px);
     grid-template-rows: repeat(8, 50px);
     */
-    grid-column-start: 2;
-    grid-row-start: 3;
     aspect-ratio: 1/1;
     border: 1px solid black;
     /* justify-content: center; */
@@ -117,11 +122,13 @@ main{
 }
 
 ul {
-  grid-column: 1 / span 3;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    grid-area: header;
   list-style-type: none;
   margin: 0;
   padding: 0;
-  overflow: hidden;
   background-color: #333333;
   position: sticky;
   top: 0;
@@ -132,7 +139,6 @@ ul li {
   display: block;
   color: white;
   text-align: center;
-  padding: 14px 16px;
   text-decoration: none;
 }
 
@@ -142,20 +148,78 @@ ul li button {
 }
 
 ul li:hover {
-  
   background-color: #111111;
 }
 
-.p1{
-  text-align: left;
-  grid-column-start: 2;
-  grid-row-start: 2;
-  padding-top: 3%;
+.playerInfo{
+    display: grid;
+    grid-template-columns: 1fr 6fr;
+    grid-template-rows: 1fr;
+    grid-area: playerInfo;
 }
 
-.p2{
-  text-align: right;
-  grid-column-start: 2;
-  grid-row-start: 4;
-  padding-top: 3%;
+/* lil chatgpt  */
+.playerInfo:nth-of-type(1){
+    grid-column: 2;
+    grid-row: 2;
+}
+
+.playerInfo:nth-of-type(2){
+    grid-column: 2;
+    grid-row: 4;
+}
+
+.nameIndicatorParent{
+    display: flex;
+    align-items: center;
+    justify-self: left;
+    padding-left: 3%;
+
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+}
+
+.nameIndicator{
+    font-size: 6vh;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.activityIndicator{
+    align-self: center;
+    justify-self: right;
+    height: 20%;
+    aspect-ratio: 1/1;
+    border: 2px solid black;
+    border-radius: 50%;
+    background-color: lightslategray;
+
+}
+
+@media (max-aspect-ratio: 1/1) {
+    body{
+        display: grid;
+        grid-template-columns: 1fr; 
+        grid-template-rows: 1fr 3fr 8fr 3fr 1fr;
+        grid-template-areas: 
+            "header"
+            "playerInfo"
+            "main"
+            "asdf"
+            "footer";
+
+    }
+
+    ul{
+        justify-content: space-evenly;
+    }
+
+    .playerInfo:nth-of-type(1){
+        grid-column: 1;
+        grid-row: 2;
+    }
+
+    .playerInfo:nth-of-type(2){
+        grid-column: 1;
+        grid-row: 4;
+    }
 }
