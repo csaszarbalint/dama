@@ -150,14 +150,12 @@ ul li:hover {
   text-align: left;
   grid-column-start: 2;
   grid-row-start: 2;
-  padding-top: 0;
-  margin: auto;
+  padding-top: 3%;
 }
 
 .p2{
   text-align: right;
   grid-column-start: 2;
   grid-row-start: 4;
-  padding-bottom: 0;
-  margin: auto;
+  padding-top: 3%;
 }
