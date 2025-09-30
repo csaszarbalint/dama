@@ -147,12 +147,14 @@ class CheckersBoard{
             new Vec2(1,-1)
         ]
         this.STARTING_PATTERN = [
-            new Vec2(0,2), //2 up
-            new Vec2(1,-1), //1 down, 1 left 
-            new Vec2(1,-1), //1 down, 1 left 
+            new Vec2(2,0)
         ]
 
-        this.MIDDLE_POINT = new Vec2(4.5, 4.5) //hardcoded cause js don't have a built in median function or smth TODO: fix later
+        this.MIDDLE_POINT = new Vec2(
+            this.SIZE.x / 2 + 0.5           
+            , 
+            this.SIZE.y / 2 + 0.5           
+        ) 
 
         this.TRANSFORM_NO_ROTATION = [
             new Vec2(1,0),
@@ -417,9 +419,12 @@ class CheckersBoard{
 }
 
 class Player{
-    constructor(name, pieceStyle){
+    constructor(name, pieceStyle, infoDiv){
         this.name = name
         this.pieceStyle = pieceStyle
+        this.infoDiv = infoDiv
+
+        this.infoDiv.innerText = this.name
     }
 }
 
@@ -457,11 +462,7 @@ class Game{
     onWin(winner){
         alert(winner.name + " won")
 
-        const node = this.checkersBoard.parentNode
-        node.innerHTML = ''
-        this.checkersBoard = new CheckersBoard(node, new Vec2(8,8))
-
-        //location.reload() //the laziest shit ever
+        location.reload() //the laziest shit ever
     }
 
     onMoveMadeCallback(){
@@ -531,8 +532,8 @@ function change(action)
 document.body.onload = () => {
     const game = new Game(
         new CheckersBoard(document.querySelector('main'), new Vec2(8,8)),
-        new Player('Big', 'piece_black'),
-        new Player('Balls', 'piece_white'))
+        new Player('Big', 'piece_black', document.getElementsByClassName('p1')[0]),
+        new Player('Balls', 'piece_white', document.getElementsByClassName('p2')[0]))
 
     game.start()
 }
