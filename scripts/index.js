@@ -549,8 +549,8 @@ function change(action)
 document.body.onload = () => {
     const game = new Game(
         new CheckersBoard(document.querySelector('main'), new Vec2(8,8)),
-        new Player('Big', 'piece_black', document.querySelector("body div.playerInfo[name='player1']")),
-        new Player('Balls', 'piece_white', document.querySelector("body div.playerInfo[name='player2']")))
+        new Player('player1', 'piece_black', document.querySelector("body div.playerInfo[name='player1']")),
+        new Player('player2', 'piece_white', document.querySelector("body div.playerInfo[name='player2']")))
 
     game.start()
 }
